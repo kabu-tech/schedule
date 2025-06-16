@@ -1,0 +1,18 @@
+# Dockerイメージから除外するファイル
+
+.git
+.github
+.vscode
+.claude
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+.env
+*.log
+docs/
+README.md
+.gitignore

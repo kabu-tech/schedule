@@ -1,0 +1,47 @@
+# K-POP Schedule Auto-Feed 必要ライブラリ
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Google Cloud
+google-cloud-firestore==2.11.1
+google-cloud-run==0.10.1
+google-cloud-scheduler==2.13.1
+functions-framework==3.5.0
+
+# AI/ML (Vertex AI Gemini)
+google-cloud-aiplatform==1.38.1
+vertexai==1.38.1
+
+# Data Processing
+pandas==2.1.4
+numpy==1.24.3
+
+# Web Scraping
+snscrape==0.7.0.20230622
+serpapi==0.1.5
+requests==2.31.0
+beautifulsoup4==4.12.2
+
+# Calendar Integration
+google-api-python-client==2.108.0
+google-auth==2.23.4
+google-auth-oauthlib==1.1.0
+icalendar==5.0.11
+
+# 日本語処理
+jaconv==0.3.4
+mojimoji==0.0.12
+
+# Utilities
+python-dotenv==1.0.0
+pydantic==2.5.0
+python-multipart==0.0.6
+jinja2==3.1.2
+
+# Development
+pytest==7.4.3
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
