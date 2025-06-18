@@ -66,4 +66,4 @@ data/
 # Temporary Files
 temp/
 tmp/
-*.tmp
+*.tmp.github/
