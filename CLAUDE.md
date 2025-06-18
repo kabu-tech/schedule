@@ -76,42 +76,28 @@ gcloud run deploy schedule-auto-feed \
 
 ### ディレクトリ構造
 ```
-app/
-├── main.py              # FastAPIメインエントリポイント（実装済み）
-├── config.py            # アプリケーション設定（将来実装）
-├── models/              # データモデル
-│   └── __init__.py
-├── services/            # ビジネスロジック・外部API連携
-│   ├── __init__.py
-│   ├── scraper.py       # X (Twitter)スクレイピング（将来実装）
-│   ├── extractor.py     # AI スケジュール抽出（将来実装）
-│   └── register.py      # アイドル登録サービス（将来実装）
-└── utils/               # ユーティリティ
-    ├── __init__.py
-    └── japanese.py      # 日本語処理（将来実装）
+src/
+├── main.py         # Cloud Runエントリポイント（未実装）
+├── config.py       # 日本語設定とプロンプトテンプレート
+├── scraper.py      # X (Twitter)スクレイピング処理
+├── extractor.py    # Vertex AI Geminiによるスケジュール抽出
+├── calendar.py     # Google Calendar連携（未実装）
+├── register.py     # 推しアイドル登録UI（未実装）
+└── utils/
+    └── japanese.py # 日本語テキスト処理ユーティリティ
 ```
 
-### 現在実装されているモジュール
-
-#### main.py
-- FastAPIアプリケーションのメインエントリポイント
-- 基本的なAPIエンドポイント（ルート、ヘルスチェック、テスト用スクレイピング）
-- エラーハンドリング、ロギング設定
-- 開発用サーバー起動機能
-
-### 将来実装予定のモジュール
+### 主要モジュールの概要
 
 #### scraper.py
-- snscrapeを使用したX (Twitter)投稿取得
-- 日本語対応、リトライ処理、エラーハンドリング
+- `XScraper`クラス: snscrapeを使用したX投稿取得
+- 日本語対応済み、リトライ処理、エラーハンドリング実装
+- 主要メソッド: `search_tweets()`, `get_user_tweets()`, `extract_schedule_candidates()`
 
-#### extractor.py  
-- Vertex AI Geminiによるスケジュール情報抽出
+#### extractor.py
+- `ScheduleExtractor`クラス: Vertex AI Geminiによるスケジュール情報抽出
 - 日本語プロンプト使用、構造化データ抽出
-
-#### config.py
-- 日本語メッセージとプロンプトテンプレート
-- アプリケーション設定
+- 主要メソッド: `extract_from_text()`, `extract_from_multiple_sources()`, `validate_and_normalize()`
 
 #### utils/japanese.py
 - 日本語日付・時刻の抽出と正規化
@@ -130,19 +116,15 @@ app/
 ## 実装状況
 
 ### 実装済み ✅
-- FastAPIアプリケーションの基本構造
-- ヘルスチェックエンドポイント
-- テスト用APIエンドポイント（モックデータ）
-- エラーハンドリング・ロギング
-- ローカル開発環境（localhost:8000で動作確認済み）
+- X (Twitter)スクレイピング機能
+- Vertex AI Geminiによるスケジュール抽出
+- 日本語処理ユーティリティ
+- 設定ファイルとプロンプトテンプレート
+- main.py: FastAPIアプリケーションの基本実装（ヘルスチェック、テストエンドポイント）
 
-### 実装予定 ⏳
-- X (Twitter)スクレイピング機能（scraper.py）
-- Vertex AI Geminiによるスケジュール抽出（extractor.py）
-- Google Calendar API連携（calendar.py）
-- アイドル登録用Web UI（register.py）
-- 日本語処理ユーティリティ（utils/japanese.py）
-- 設定ファイル・プロンプトテンプレート（config.py）
+### 未実装 ⏳
+- calendar.py: Google Calendar API連携
+- register.py: アイドル登録用Web UI
 - Firestore連携（アーティスト情報の保存/取得）
 - 本番用のスケジュール収集処理
 - テストコード

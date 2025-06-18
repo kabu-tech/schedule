@@ -67,3 +67,4 @@ data/
 temp/
 tmp/
 *.tmp.github/
+.env
