@@ -13,8 +13,8 @@ from google.cloud import aiplatform
 from google.oauth2 import service_account
 import vertexai
 from vertexai.generative_models import GenerativeModel
-from .config import get_prompt, JAPANESE_PROMPTS
-from .utils.japanese import JapaneseTextProcessor
+from config import get_prompt, JAPANESE_PROMPTS
+from utils.japanese import JapaneseTextProcessor
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)

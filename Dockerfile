@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 8080
 
 # アプリケーション実行
-CMD ["python", "-m", "functions_framework", "--target=main", "--port=8080"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

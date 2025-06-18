@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 import snscrape.modules.twitter as sntwitter
-from .config import get_message
+from config import get_message
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
