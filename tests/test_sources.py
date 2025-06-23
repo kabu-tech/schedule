@@ -9,6 +9,7 @@ import responses
 from fastapi.testclient import TestClient
 import sys
 import os
+from unittest.mock import patch
 
 # プロジェクトのルートをPythonパスに追加
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,10 +22,10 @@ client = TestClient(app)
 class TestSourcesEndpoint:
     """GET /sources エンドポイントのテストクラス"""
     
-    @responses.activate
-    def test_sources_success(self):
+    @patch('app.routers.sources.build')
+    def test_sources_success(self, mock_build):
         """正常系：q=Blackpinkで3件以下の結果を返す"""
-        # Google Search APIのモック設定
+        # Google Search APIのモックレスポンス
         mock_response = {
             "items": [
                 {
@@ -45,12 +46,10 @@ class TestSourcesEndpoint:
             ]
         }
         
-        responses.add(
-            responses.GET,
-            "https://www.googleapis.com/customsearch/v1",
-            json=mock_response,
-            status=200
-        )
+        # モックサービスの設定
+        mock_service = mock_build.return_value
+        mock_cse = mock_service.cse.return_value
+        mock_cse.list.return_value.execute.return_value = mock_response
         
         # APIリクエスト
         response = client.get("/sources?q=Blackpink")
@@ -67,13 +66,14 @@ class TestSourcesEndpoint:
         response = client.get("/sources?q=")
         assert response.status_code == 400
         
+        # qパラメータが存在しない場合は422（FastAPIのバリデーションエラー）
         response = client.get("/sources")
-        assert response.status_code == 400
+        assert response.status_code == 422
     
-    @responses.activate
-    def test_sources_response_format(self):
+    @patch('app.routers.sources.build')
+    def test_sources_response_format(self, mock_build):
         """レスポンス形式の検証：{title, url, snippet}"""
-        # Google Search APIのモック設定
+        # Google Search APIのモックレスポンス
         mock_response = {
             "items": [
                 {
@@ -84,12 +84,10 @@ class TestSourcesEndpoint:
             ]
         }
         
-        responses.add(
-            responses.GET,
-            "https://www.googleapis.com/customsearch/v1",
-            json=mock_response,
-            status=200
-        )
+        # モックサービスの設定
+        mock_service = mock_build.return_value
+        mock_cse = mock_service.cse.return_value
+        mock_cse.list.return_value.execute.return_value = mock_response
         
         response = client.get("/sources?q=test")
         

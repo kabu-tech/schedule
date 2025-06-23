@@ -27,6 +27,10 @@ app = FastAPI(
     version="0.1.0"
 )
 
+# ルーターの登録
+from app.routers import sources
+app.include_router(sources.router)
+
 # リクエスト/レスポンスモデル
 class ScrapeRequest(BaseModel):
     """スクレイピングリクエスト"""

@@ -42,3 +42,5 @@ pytest>=7.4.0
 black>=23.0.0
 flake8>=6.0.0
 mypy>=1.7.0
+responses>=0.25.0
+httpx>=0.25.0
