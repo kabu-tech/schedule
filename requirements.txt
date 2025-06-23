@@ -44,3 +44,4 @@ flake8>=6.0.0
 mypy>=1.7.0
 responses>=0.25.0
 httpx>=0.25.0
+google-generativeai>=0.7.0

@@ -28,8 +28,9 @@ app = FastAPI(
 )
 
 # ルーターの登録
-from app.routers import sources
+from app.routers import sources, extract
 app.include_router(sources.router)
+app.include_router(extract.router)
 
 # リクエスト/レスポンスモデル
 class ScrapeRequest(BaseModel):
