@@ -12,6 +12,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+# カレンダー機能のインポート
+from app.services.calendar import CalendarService
+from app.routers.events import EventData
+
 # ロギング設定
 logging.basicConfig(
     level=logging.INFO,
@@ -54,6 +58,19 @@ class HealthResponse(BaseModel):
     version: str
     services: Dict[str, str]
 
+class CalendarInsertResponse(BaseModel):
+    """カレンダー挿入レスポンス"""
+    success: bool
+    message: str
+    event_id: Optional[str] = None
+    calendar_url: Optional[str] = None
+
+class CalendarEventResponse(BaseModel):
+    """カレンダーイベント取得レスポンス"""
+    success: bool
+    message: str
+    event: Optional[Dict] = None
+
 # ルートエンドポイント
 @app.get("/", response_model=Dict[str, str])
 async def root():
@@ -74,7 +91,7 @@ async def health_check():
         "api": "healthy",
         "scraper": "not_implemented",
         "extractor": "not_implemented",
-        "calendar": "not_implemented",
+        "calendar": "implemented",
         "database": "not_connected"
     }
     
@@ -122,6 +139,121 @@ async def test_scrape(request: ScrapeRequest):
     except Exception as e:
         logger.error(f"Scrape error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Google Calendar連携エンドポイント
+@app.post("/events/insert", response_model=CalendarInsertResponse)
+async def insert_calendar_event(event: EventData):
+    """
+    イベントをGoogle Calendarに挿入
+    
+    Args:
+        event: 挿入するイベントデータ
+        
+    Returns:
+        挿入結果（成功/失敗、イベントID、カレンダーURL）
+    """
+    try:
+        logger.info(f"Calendar insert request for event: {event.title}")
+        
+        # CalendarServiceのインスタンス化
+        calendar_service = CalendarService()
+        
+        # イベントをカレンダーに挿入
+        event_id = calendar_service.insert_event(event)
+        
+        # カレンダーURLの構築（Googleカレンダーでイベントを表示）
+        calendar_url = f"https://calendar.google.com/calendar/event?eid={event_id}"
+        
+        logger.info(f"Event inserted successfully: {event_id}")
+        
+        return CalendarInsertResponse(
+            success=True,
+            message=f"イベント '{event.title}' がカレンダーに正常に追加されました",
+            event_id=event_id,
+            calendar_url=calendar_url
+        )
+        
+    except ValueError as e:
+        # 設定エラー（環境変数不足など）
+        logger.error(f"Configuration error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"設定エラー: {str(e)}"
+        )
+        
+    except Exception as e:
+        # その他のエラー
+        logger.error(f"Calendar insert error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"カレンダー挿入エラー: {str(e)}"
+        )
+
+@app.get("/events/{event_id}", response_model=CalendarEventResponse)
+async def get_calendar_event(event_id: str):
+    """
+    指定されたIDのカレンダーイベントを取得
+    
+    Args:
+        event_id: 取得するイベントのID
+        
+    Returns:
+        イベント情報
+    """
+    try:
+        logger.info(f"Calendar get request for event: {event_id}")
+        
+        calendar_service = CalendarService()
+        event = calendar_service.get_event(event_id)
+        
+        if event is None:
+            return CalendarEventResponse(
+                success=False,
+                message=f"イベント '{event_id}' が見つかりませんでした",
+                event=None
+            )
+        
+        return CalendarEventResponse(
+            success=True,
+            message="イベントを正常に取得しました",
+            event=event
+        )
+        
+    except Exception as e:
+        logger.error(f"Calendar get error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"カレンダー取得エラー: {str(e)}"
+        )
+
+@app.delete("/events/{event_id}")
+async def delete_calendar_event(event_id: str):
+    """
+    指定されたIDのカレンダーイベントを削除
+    
+    Args:
+        event_id: 削除するイベントのID
+        
+    Returns:
+        削除結果
+    """
+    try:
+        logger.info(f"Calendar delete request for event: {event_id}")
+        
+        calendar_service = CalendarService()
+        success = calendar_service.delete_event(event_id)
+        
+        if success:
+            return {"success": True, "message": f"イベント '{event_id}' を正常に削除しました"}
+        else:
+            return {"success": False, "message": f"イベント '{event_id}' の削除に失敗しました"}
+        
+    except Exception as e:
+        logger.error(f"Calendar delete error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"カレンダー削除エラー: {str(e)}"
+        )
 
 # エラーハンドラー
 @app.exception_handler(HTTPException)
