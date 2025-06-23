@@ -6,12 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 K-POP Schedule Auto-Feed - K-POPアーティストのスケジュール情報を自動収集してGoogleカレンダーに反映するCloud Runアプリケーション
 
+**🚀 本番環境URL:** https://schedule-auto-feed-wkwgupze5a-an.a.run.app
+
 ### 技術スタック
-- **バックエンド**: Python 3.11, FastAPI, Functions Framework
-- **インフラ**: Google Cloud Run (2nd gen), Cloud Scheduler, Firestore
-- **AI/ML**: Vertex AI Gemini Pro（スケジュール情報抽出・信頼性フィルタリング）
+- **バックエンド**: Python 3.11, FastAPI
+- **インフラ**: Google Cloud Run, Artifact Registry, Firestore
+- **CI/CD**: GitHub Actions (Workload Identity Federation)
+- **AI/ML**: Gemini API（スケジュール情報抽出・信頼性フィルタリング）
 - **検索・情報収集**: Google Programmable Search Engine API（Web検索）
-- **日本語処理**: jaconv, mojimoji
+- **認証**: Workload Identity Federation（セキュア認証）
 
 ### 重要なドキュメント
 - **setup.md**: 初心者向けの詳細なセットアップガイド
@@ -37,34 +40,42 @@ cp .env.example .env
 # .envファイルを編集してAPIキーを設定
 
 # FastAPIサーバーの起動（開発モード）
-cd src
+cd app
 uvicorn main:app --reload --host 0.0.0.0 --port 8080
 
 # または、プロジェクトルートから
-PYTHONPATH=./src uvicorn src.main:app --reload --host 0.0.0.0 --port 8080
+PYTHONPATH=./app uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
 ```
 
-詳細な動作確認手順は `docs/local-test.md` を参照。
+### テスト実行
+```bash
+# 全テスト実行
+pytest
+
+# 特定のテストファイル実行
+pytest tests/test_sources.py -v
+pytest tests/test_extract.py -v
+pytest tests/test_events_save.py -v
+```
 
 ### コード品質
 ```bash
 # フォーマット
-black src/
+black app/
 
 # リンティング
-flake8 src/
+flake8 app/
 
 # 型チェック
-mypy src/
+mypy app/
 ```
 
 ### デプロイ
 ```bash
-# 手動デプロイ（deploy.shを使用）
-chmod +x deploy.sh
-./deploy.sh
+# 自動デプロイ（GitHub Actions）
+git push origin main  # mainブランチへのpushで自動デプロイ
 
-# または直接gcloudコマンド
+# 手動デプロイ（ローカルから）
 gcloud run deploy schedule-auto-feed \
   --source=. \
   --platform=managed \
