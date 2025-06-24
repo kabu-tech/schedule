@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-POP アーティスト登録</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .btn {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #5a67d8;
+        }
+        
+        .btn-danger {
+            background-color: #e53e3e;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        
+        .artist-list {
+            margin-top: 30px;
+        }
+        
+        .artist-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .artist-item:last-child {
+            border-bottom: none;
+        }
+        
+        .artist-info {
+            flex-grow: 1;
+        }
+        
+        .artist-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .artist-meta {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .artist-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .message-success {
+            background-color: #c6f6d5;
+            color: #276749;
+        }
+        
+        .message-error {
+            background-color: #fed7d7;
+            color: #9b2c2c;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .quick-add {
+            margin-top: 20px;
+        }
+        
+        .quick-add h3 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .tag {
+            background-color: #e2e8f0;
+            color: #2d3748;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+        
+        .tag:hover {
+            background-color: #cbd5e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 K-POP アーティスト登録</h1>
+        
+        <div id="message"></div>
+        
+        <div class="card">
+            <h2>新しいアーティストを登録</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="artistName">アーティスト名</label>
+                    <div style="position: relative;">
+                        <input 
+                            type="text" 
+                            id="artistName" 
+                            name="artistName" 
+                            placeholder="例: BTS, SEVENTEEN, NewJeans..."
+                            autocomplete="off"
+                            required
+                        >
+                        <div id="suggestions" class="suggestions"></div>
+                    </div>
+                </div>
+                
+                <div class="checkbox-wrapper">
+                    <input 
+                        type="checkbox" 
+                        id="notification" 
+                        name="notification" 
+                        checked
+                    >
+                    <label for="notification">新しいスケジュールの通知を受け取る</label>
+                </div>
+                
+                <button type="submit" class="btn">登録</button>
+            </form>
+            
+            <div class="quick-add">
+                <h3>人気アーティスト</h3>
+                <div class="tag-list">
+                    {% for artist in suggested_artists %}
+                    <span class="tag" onclick="quickAdd('{{ artist }}')">{{ artist }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card artist-list">
+            <h2>登録済みアーティスト</h2>
+            <div id="artistList">
+                {% if artists %}
+                    {% for artist in artists %}
+                    <div class="artist-item" data-id="{{ artist.id }}">
+                        <div class="artist-info">
+                            <div class="artist-name">{{ artist.name }}</div>
+                            <div class="artist-meta">
+                                通知: {{ "ON" if artist.notification_enabled else "OFF" }}
+                            </div>
+                        </div>
+                        <div class="artist-actions">
+                            <button 
+                                class="btn btn-small"
+                                onclick="toggleNotification('{{ artist.id }}', {{ 'false' if artist.notification_enabled else 'true' }})"
+                            >
+                                通知{{ "OFF" if artist.notification_enabled else "ON" }}
+                            </button>
+                            <button 
+                                class="btn btn-danger btn-small"
+                                onclick="unregisterArtist('{{ artist.id }}', '{{ artist.name }}')"
+                            >
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>まだアーティストが登録されていません</p>
+                        <p>上のフォームから登録してください</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const artistInput = document.getElementById('artistName');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const form = document.getElementById('registerForm');
+        const messageDiv = document.getElementById('message');
+        
+        // 自動補完機能
+        let searchTimeout;
+        artistInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 1) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/artists/search?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.suggestions.length > 0) {
+                            suggestionsDiv.innerHTML = data.suggestions
+                                .map(s => `<div class="suggestion-item" onclick="selectSuggestion('${s}')">${s}</div>`)
+                                .join('');
+                            suggestionsDiv.style.display = 'block';
+                        } else {
+                            suggestionsDiv.style.display = 'none';
+                        }
+                    });
+            }, 300);
+        });
+        
+        // 提案を選択
+        function selectSuggestion(artist) {
+            artistInput.value = artist;
+            suggestionsDiv.style.display = 'none';
+        }
+        
+        // クイック追加
+        function quickAdd(artist) {
+            artistInput.value = artist;
+            form.dispatchEvent(new Event('submit'));
+        }
+        
+        // フォーム送信
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const artistName = artistInput.value.trim();
+            const notification = document.getElementById('notification').checked;
+            
+            try {
+                const response = await fetch('/artists/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        artist_name: artistName,
+                        notification_enabled: notification
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('success', `${data.name}を登録しました`);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showMessage('error', data.detail || '登録に失敗しました');
+                }
+            } catch (error) {
+                showMessage('error', 'エラーが発生しました');
+            }
+        });
+        
+        // アーティスト削除
+        async function unregisterArtist(artistId, artistName) {
+            if (!confirm(`${artistName}の登録を解除しますか？`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/artists/${artistId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showMessage('success', '登録を解除しました');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    const data = await response.json();
+                    showMessage('error', data.detail || '削除に失敗しました');
+                }
+            } catch (error) {
+                showMessage('error', 'エラーが発生しました');
+            }
+        }
+        
+        // 通知設定切替
+        async function toggleNotification(artistId, enabled) {
+            try {
+                const response = await fetch(`/artists/${artistId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        notification_enabled: enabled
+                    })
+                });
+                
+                if (response.ok) {
+                    showMessage('success', `通知を${enabled ? '有効' : '無効'}にしました`);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    const data = await response.json();
+                    showMessage('error', data.detail || '更新に失敗しました');
+                }
+            } catch (error) {
+                showMessage('error', 'エラーが発生しました');
+            }
+        }
+        
+        // メッセージ表示
+        function showMessage(type, text) {
+            messageDiv.className = `message message-${type}`;
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // クリックで提案を閉じる
+        document.addEventListener('click', function(e) {
+            if (!artistInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
