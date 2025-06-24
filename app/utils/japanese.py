@@ -63,6 +63,64 @@ class JapaneseTextProcessor:
         return None
     
     @staticmethod
+    def normalize_date(date_str: str) -> Optional[str]:
+        """日付文字列を標準形式(YYYY-MM-DD)に正規化"""
+        if not date_str:
+            return None
+        
+        # 既に標準形式の場合
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', date_str):
+            return date_str
+        
+        # 日本語日付から抽出
+        extracted = JapaneseTextProcessor.extract_date_jp(date_str)
+        if extracted:
+            return extracted
+        
+        # その他の形式を試行
+        try:
+            # ISO形式のパース試行
+            if 'T' in date_str:
+                date_str = date_str.split('T')[0]
+            
+            # スラッシュ区切り (YYYY/MM/DD)
+            if re.match(r'^\d{4}/\d{1,2}/\d{1,2}$', date_str):
+                parts = date_str.split('/')
+                return f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}"
+            
+            return None
+            
+        except Exception:
+            return None
+    
+    @staticmethod
+    def normalize_time(time_str: str) -> Optional[str]:
+        """時刻文字列を標準形式(HH:MM)に正規化"""
+        if not time_str:
+            return None
+        
+        # 既に標準形式の場合
+        if re.match(r'^\d{2}:\d{2}$', time_str):
+            return time_str
+        
+        # 日本語時刻から抽出
+        extracted = JapaneseTextProcessor.extract_time_jp(time_str)
+        if extracted:
+            return extracted
+        
+        # その他の形式を試行
+        try:
+            # 単純な時:分形式
+            if re.match(r'^\d{1,2}:\d{2}$', time_str):
+                parts = time_str.split(':')
+                return f"{parts[0].zfill(2)}:{parts[1]}"
+            
+            return None
+            
+        except Exception:
+            return None
+    
+    @staticmethod
     def detect_event_type(text: str) -> str:
         """テキストからイベント種別を判定"""
         event_types = {

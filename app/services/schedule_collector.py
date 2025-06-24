@@ -14,9 +14,9 @@ import httpx
 from google.generativeai import GenerativeModel
 import google.generativeai as genai
 
-from app.config import JAPANESE_SCHEDULE_PROMPT_TEMPLATE
-from app.utils.japanese import JapaneseTextProcessor
-from app.services.firestore_client import FirestoreClient
+from config import JAPANESE_SCHEDULE_PROMPT_TEMPLATE
+from utils.japanese import JapaneseTextProcessor
+from services.firestore_client import FirestoreClient
 
 logger = logging.getLogger(__name__)
 
