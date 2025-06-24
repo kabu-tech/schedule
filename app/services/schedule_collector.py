@@ -14,7 +14,7 @@ import httpx
 from google.generativeai import GenerativeModel
 import google.generativeai as genai
 
-from config import JAPANESE_SCHEDULE_PROMPT_TEMPLATE
+from config import JAPANESE_SCHEDULE_PROMPT_TEMPLATE, UNIVERSAL_SCHEDULE_PROMPT_TEMPLATE
 from utils.japanese import JapaneseTextProcessor
 from services.firestore_client import FirestoreClient
 
@@ -50,7 +50,7 @@ class ScheduleCollector:
         logger.info("ScheduleCollector initialized")
     
     async def collect_artist_schedules(self, artist_name: str, 
-                                     days_ahead: int = 30) -> Dict[str, Any]:
+                                     days_ahead: int = 30, genre: str = "K-POP") -> Dict[str, Any]:
         """
         指定されたアーティストのスケジュール情報を収集
         
@@ -77,7 +77,7 @@ class ScheduleCollector:
             
             # 2. Geminiでスケジュール情報を抽出・フィルタリング
             extracted_events = await self._extract_schedules_with_gemini(
-                search_results, artist_name
+                search_results, artist_name, genre
             )
             
             # 3. 日本語処理とバリデーション
@@ -252,7 +252,7 @@ class ScheduleCollector:
             return []
     
     async def _extract_schedules_with_gemini(self, search_results: List[Dict[str, str]], 
-                                           artist_name: str) -> List[Dict[str, Any]]:
+                                           artist_name: str, genre: str = "K-POP") -> List[Dict[str, Any]]:
         """
         Gemini APIでスケジュール情報を抽出・フィルタリング
         
@@ -267,9 +267,10 @@ class ScheduleCollector:
             # 検索結果をテキストに整理
             search_text = self._format_search_results_for_gemini(search_results)
             
-            # プロンプトの生成
-            prompt = JAPANESE_SCHEDULE_PROMPT_TEMPLATE.format(
+            # プロンプトの生成（汎用版を使用）
+            prompt = UNIVERSAL_SCHEDULE_PROMPT_TEMPLATE.format(
                 artist_name=artist_name,
+                genre=genre,
                 search_results=search_text
             )
             
@@ -389,10 +390,10 @@ URL: {url}
                 validated_event = {
                     'date': normalized_date,
                     'time': normalized_time or '',
-                    'title': event.get('title', '').strip(),
+                    'title': (event.get('title') or '').strip(),
                     'artist': event_artist,
                     'type': event.get('type', 'その他'),
-                    'location': event.get('location', '').strip(),
+                    'location': (event.get('location') or '').strip(),
                     'source': event.get('source', ''),
                     'confidence': confidence,
                     'reliability': reliability,
