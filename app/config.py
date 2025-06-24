@@ -103,6 +103,60 @@ JSON形式で回答してください：
 """
 }
 
+# 改良版Gemini信頼性フィルタリングプロンプト
+JAPANESE_SCHEDULE_PROMPT_TEMPLATE = """
+以下の検索結果から、{artist_name}の信頼性の高いK-POPスケジュール情報のみを抽出してください。
+
+【信頼性判定基準】
+高信頼度：
+- 公式サイト（.com、.jp、.kr等で「official」「artist名」を含むドメイン）
+- 大手メディア（NHK、朝日新聞、音楽ナタリー、Billboard JAPANなど）
+- 公式チケットサイト（e+、チケットぴあ、ローソンチケット、イープラスなど）
+- 行政機関の発表
+- 公式SNSアカウント（認証済み）
+
+低信頼度（無視する）：
+- 個人ブログ・まとめサイト
+- 「〜かも」「〜らしい」「噂」「予想」「リーク」を含む投稿
+- 匿名掲示板・SNSの非公式投稿
+- 「未確認」「情報待ち」を含む情報
+- ファンサイトの推測・予想記事
+
+【抽出ルール】
+1. 明確な日付が記載されているもののみ
+2. 過去の日付は除外
+3. 信頼度0.7未満の情報は除外
+4. 重複する情報は信頼度の高いものを優先
+5. {artist_name}に関連しないイベントは除外
+
+【検索結果】
+{search_results}
+
+【出力形式】
+以下のJSON形式でのみ回答してください。他の文章は含めないでください。
+
+{{
+    "events": [
+        {{
+            "date": "YYYY-MM-DD",
+            "time": "HH:MM",
+            "title": "イベント名",
+            "artist": "{artist_name}",
+            "type": "コンサート|リリース|テレビ出演|ラジオ出演|イベント|ファンミーティング|その他",
+            "location": "開催場所",
+            "source": "https://...",
+            "confidence": 0.9,
+            "reliability": "high|medium|low"
+        }}
+    ]
+}}
+
+信頼性が低い場合や該当する情報がない場合は、空の配列を返してください：
+{{
+    "events": []
+}}
+"""
+
 def get_message(category: str, key: str) -> str:
     """日本語メッセージを取得"""
     return Config.MESSAGES.get(category, {}).get(key, f"{category}.{key}")

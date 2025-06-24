@@ -23,7 +23,9 @@ router = APIRouter(
 )
 
 # テンプレートの設定
-templates = Jinja2Templates(directory="app/templates")
+import os
+template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+templates = Jinja2Templates(directory=template_dir)
 
 # Firestoreクライアントの初期化（エラーハンドリング付き）
 try:

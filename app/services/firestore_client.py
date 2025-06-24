@@ -86,10 +86,10 @@ class FirestoreClient:
             アーティスト情報のリスト
         """
         try:
-            # ユーザーIDでフィルタリングして取得
+            # ユーザーIDでフィルタリングして取得（order_byを削除してインデックス要件を回避）
             query = self.collection.where(
                 filter=FieldFilter("user_id", "==", user_id)
-            ).order_by("registered_at")
+            )
             
             docs = query.stream()
             
