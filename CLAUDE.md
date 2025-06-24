@@ -136,9 +136,9 @@ src/
 - 日本語処理ユーティリティ
 - 設定ファイルとプロンプトテンプレート
 - main.py: FastAPIアプリケーションの基本実装（ヘルスチェック、テストエンドポイント）
+- calendar.py: Google Calendar API連携
 
 ### 未実装 ⏳
-- calendar.py: Google Calendar API連携
 - register.py: アイドル登録用Web UI
 - Firestore連携（アーティスト情報の保存/取得）
 - 本番用のスケジュール収集処理
