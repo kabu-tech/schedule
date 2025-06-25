@@ -102,15 +102,15 @@ async def artists_page(request: Request):
 @router.get("/calendar", response_class=HTMLResponse)
 async def artists_calendar_page(request: Request):
     """
-    アーティスト登録・カレンダー統合ページを表示
+    アーティスト登録・カレンダー統合ページを表示（シンプル版）
     """
     try:
-        return templates.TemplateResponse("artists_with_calendar.html", {
+        return templates.TemplateResponse("simple_calendar.html", {
             "request": request
         })
     except Exception as e:
         logger.error(f"Failed to render calendar page: {e}")
-        return templates.TemplateResponse("artists_with_calendar.html", {
+        return templates.TemplateResponse("simple_calendar.html", {
             "request": request,
             "error": "ページの読み込みに失敗しました"
         })
