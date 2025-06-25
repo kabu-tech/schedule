@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K-POP アーティスト登録</title>
+    <title>アーティスト登録 - Universal Entertainment Schedule</title>
     <style>
         * {
             box-sizing: border-box;
@@ -214,7 +214,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎵 K-POP アーティスト登録</h1>
+        <h1>🎵 アーティスト登録</h1>
         
         <div id="message"></div>
         
@@ -228,7 +228,7 @@
                             type="text" 
                             id="artistName" 
                             name="artistName" 
-                            placeholder="例: BTS, SEVENTEEN, NewJeans..."
+                            placeholder="例: BTS, あいみょん, 宝塚歌劇団..."
                             autocomplete="off"
                             required
                         >
@@ -250,7 +250,7 @@
             </form>
             
             <div class="quick-add">
-                <h3>人気アーティスト</h3>
+                <h3>人気アーティスト（ジャンル別）</h3>
                 <div class="tag-list">
                     {% for artist in suggested_artists %}
                     <span class="tag" onclick="quickAdd('{{ artist }}')">{{ artist }}</span>

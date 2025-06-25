@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from app.services.schedule_collector import ScheduleCollector
 from app.services.firestore_client import FirestoreClient
 from app.services.register import ArtistRegisterService
+from app.services.calendar import CalendarService
 
 logger = logging.getLogger(__name__)
 
@@ -311,7 +312,9 @@ async def get_collection_status():
         required_vars = [
             'GOOGLE_API_KEY',
             'GOOGLE_SEARCH_ENGINE_ID', 
-            'GEMINI_API_KEY'
+            'GEMINI_API_KEY',
+            'GOOGLE_SERVICE_ACCOUNT_KEY',
+            'GOOGLE_CALENDAR_ID'
         ]
         
         env_status = {}
@@ -336,7 +339,11 @@ async def get_collection_status():
             'services': {
                 'google_search': 'configured' if env_status.get('GOOGLE_API_KEY') == 'configured' else 'not_configured',
                 'gemini_ai': 'configured' if env_status.get('GEMINI_API_KEY') == 'configured' else 'not_configured',
-                'firestore': firestore_status.get('status', 'unknown')
+                'firestore': firestore_status.get('status', 'unknown'),
+                'google_calendar': 'configured' if all([
+                    env_status.get('GOOGLE_SERVICE_ACCOUNT_KEY') == 'configured',
+                    env_status.get('GOOGLE_CALENDAR_ID') == 'configured'
+                ]) else 'not_configured'
             }
         }
         
@@ -366,8 +373,64 @@ async def _add_to_calendar_background(events: List[Dict[str, Any]], user_id: str
     """Google Calendarへの追加をバックグラウンドで実行"""
     try:
         logger.info(f"Background task: Adding {len(events)} events to calendar for user {user_id}")
-        # TODO: Google Calendar連携の実装
-        logger.info("Calendar integration not yet implemented")
+        
+        # Calendar サービスの初期化
+        from app.services.calendar import CalendarService
+        from app.routers.events import EventData
+        
+        calendar_service = CalendarService()
+        
+        # 成功・失敗したイベントを追跡
+        successful_events = []
+        failed_events = []
+        
+        # 各イベントをカレンダーに追加
+        for event in events:
+            try:
+                # EventDataオブジェクトに変換
+                event_data = EventData(
+                    title=event.get('title', ''),
+                    date=event.get('date', ''),
+                    time=event.get('time', '09:00'),  # デフォルト時刻
+                    artist=event.get('artist', ''),
+                    type=event.get('type', 'イベント'),
+                    location=event.get('location', '未定'),
+                    source=event.get('source', ''),
+                    confidence=event.get('confidence', 0.5),
+                    reliability=event.get('reliability', 'medium')
+                )
+                
+                # 重複チェック
+                duplicate_id = calendar_service.check_duplicate_event(event_data)
+                if duplicate_id:
+                    logger.info(f"Skipping duplicate event: {event.get('title')} on {event.get('date')} (existing ID: {duplicate_id})")
+                    failed_events.append({
+                        'event': event,
+                        'error': f'Duplicate event already exists (ID: {duplicate_id})'
+                    })
+                    continue
+                
+                # カレンダーに挿入
+                event_id = calendar_service.insert_event(event_data)
+                successful_events.append({
+                    'event': event,
+                    'calendar_event_id': event_id
+                })
+                logger.info(f"Successfully added event to calendar: {event.get('title')} (ID: {event_id})")
+                
+            except Exception as e:
+                logger.error(f"Failed to add event to calendar: {event.get('title')} - {str(e)}")
+                failed_events.append({
+                    'event': event,
+                    'error': str(e)
+                })
+        
+        # 結果のサマリー
+        logger.info(f"Calendar sync completed: {len(successful_events)} successful, {len(failed_events)} failed")
+        
+        if failed_events:
+            logger.warning(f"Failed events: {[e['event']['title'] for e in failed_events]}")
+            
     except Exception as e:
         logger.error(f"Background calendar add failed: {e}")
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-K-POP Schedule Auto-Feed メインエントリポイント
-K-POPアーティストのスケジュール自動収集システム
+Universal Entertainment Schedule Auto-Feed メインエントリポイント
+あらゆるジャンルのアーティスト・エンターテイメント情報を自動収集するシステム
 """
 
 import logging
@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 # FastAPIアプリケーション初期化
 app = FastAPI(
-    title="K-POP Schedule Auto-Feed",
-    description="K-POPアーティストのスケジュール自動収集システム",
+    title="Universal Entertainment Schedule Auto-Feed",
+    description="あらゆるジャンルのアーティスト・エンターテイメント情報を自動収集するシステム",
     version="0.1.0"
 )
 
@@ -78,7 +78,7 @@ class CalendarEventResponse(BaseModel):
 async def root():
     """ルートエンドポイント"""
     return {
-        "message": "K-POP Schedule Auto-Feed API",
+        "message": "Universal Entertainment Schedule Auto-Feed API",
         "version": "0.1.0",
         "docs": "/docs",
         "health": "/health"
@@ -89,13 +89,28 @@ async def root():
 async def health_check():
     """システムヘルスチェック"""
     jst = timezone(timedelta(hours=9))
+    # 実際の実装状況をチェック
     services_status = {
         "api": "healthy",
-        "scraper": "not_implemented",
-        "extractor": "not_implemented",
-        "calendar": "implemented",
-        "database": "not_connected"
+        "google_search": "implemented",  # Google Search API実装済み
+        "gemini_extractor": "implemented",  # Gemini抽出機能実装済み
+        "calendar": "implemented",  # Google Calendar連携実装済み
+        "firestore": "implemented",  # Firestore連携実装済み
+        "schedule_collector": "implemented",  # スケジュール収集サービス実装済み
+        "artist_registration": "implemented"  # アーティスト登録機能実装済み
     }
+    
+    # Firestore接続状況を確認
+    try:
+        from app.services.firestore_client import FirestoreClient
+        firestore_client = FirestoreClient()
+        firestore_health = firestore_client.health_check()
+        if firestore_health.get('status') == 'healthy':
+            services_status['firestore'] = 'healthy'
+        else:
+            services_status['firestore'] = 'unhealthy'
+    except Exception as e:
+        services_status['firestore'] = f'error: {str(e)}'
     
     return HealthResponse(
         status="healthy",

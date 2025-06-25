@@ -14,9 +14,9 @@ import httpx
 from google.generativeai import GenerativeModel
 import google.generativeai as genai
 
-from config import JAPANESE_SCHEDULE_PROMPT_TEMPLATE, UNIVERSAL_SCHEDULE_PROMPT_TEMPLATE
-from utils.japanese import JapaneseTextProcessor
-from services.firestore_client import FirestoreClient
+from app.config import JAPANESE_SCHEDULE_PROMPT_TEMPLATE, UNIVERSAL_SCHEDULE_PROMPT_TEMPLATE
+from app.utils.japanese import JapaneseTextProcessor
+from app.services.firestore_client import FirestoreClient
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class ScheduleCollector:
         logger.info("ScheduleCollector initialized")
     
     async def collect_artist_schedules(self, artist_name: str, 
-                                     days_ahead: int = 30, genre: str = "K-POP") -> Dict[str, Any]:
+                                     days_ahead: int = 30, genre: str = "エンターテイメント") -> Dict[str, Any]:
         """
         指定されたアーティストのスケジュール情報を収集
         

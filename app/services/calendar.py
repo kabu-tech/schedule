@@ -18,7 +18,12 @@ from googleapiclient.errors import HttpError
 logger = logging.getLogger(__name__)
 
 # 型ヒント用インポート
-from app.routers.events import EventData
+try:
+    from app.routers.events import EventData
+except ImportError:
+    # テストスクリプトから実行された場合の代替import
+    from typing import Any
+    EventData = Any
 
 
 class CalendarService:
@@ -391,3 +396,57 @@ class CalendarService:
         except Exception as e:
             logger.error(f"Error listing events: {e}")
             raise
+    
+    def check_duplicate_event(self, event_data: EventData, time_window_hours: int = 24) -> Optional[str]:
+        """
+        重複イベントをチェック
+        同じアーティスト、日付、タイトルのイベントが既に存在するか確認
+        
+        Args:
+            event_data: チェックするイベントデータ
+            time_window_hours: チェック対象の時間範囲（時間単位）
+            
+        Returns:
+            重複イベントのID（重複がない場合はNone）
+        """
+        try:
+            service = self.get_service()
+            
+            # 検索範囲の設定（イベント日付の前後で検索）
+            event_datetime = datetime.fromisoformat(f"{event_data.date}T{event_data.time}:00")
+            time_min = (event_datetime - timedelta(hours=time_window_hours)).isoformat() + 'Z'
+            time_max = (event_datetime + timedelta(hours=time_window_hours)).isoformat() + 'Z'
+            
+            # イベントを検索
+            events_result = service.events().list(
+                calendarId=self.calendar_id,
+                timeMin=time_min,
+                timeMax=time_max,
+                singleEvents=True,
+                orderBy='startTime'
+            ).execute()
+            
+            events = events_result.get('items', [])
+            
+            # 重複チェック
+            for event in events:
+                # カスタムプロパティから情報を取得
+                extended_props = event.get('extendedProperties', {}).get('private', {})
+                existing_artist = extended_props.get('artist', '')
+                existing_date = event.get('start', {}).get('dateTime', '')[:10]  # YYYY-MM-DD形式
+                existing_title = event.get('summary', '')
+                
+                # アーティスト、日付、タイトルが一致する場合は重複と判定
+                if (existing_artist.lower() == event_data.artist.lower() and 
+                    existing_date == event_data.date and
+                    existing_title.lower() == event_data.title.lower()):
+                    logger.info(f"Duplicate event found: {event_data.title} on {event_data.date} (ID: {event['id']})")
+                    return event['id']
+            
+            logger.debug(f"No duplicate found for: {event_data.title} on {event_data.date}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error checking duplicate event: {e}")
+            # エラーの場合は重複なしとして処理を続行
+            return None

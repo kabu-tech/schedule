@@ -1,12 +1,12 @@
-# 📅 K-POP Schedule Auto-Feed
+# 📅 Universal Entertainment Schedule Auto-Feed
 
-> 公式 X と Web 検索からスケジュールを収集し、AI で抽出 → Google カレンダーに自動反映する Cloud Run アプリ
+> あらゆるジャンル（K-POP、J-POP、演劇等）のアーティスト・エンターテイメント情報をWeb検索から収集し、AIで抽出 → Googleカレンダーに自動反映する汎用Cloud Runアプリ
 
 ## ✨ ユースケース
-1. 推しアカをフォームで登録  
+1. 好きなアーティスト（ジャンル不問）をフォームで登録  
 2. Cloud Scheduler が毎日 4:00 JST に収集  
-3. Gemini で「日付・タイトル・種別」を抽出  
-4. Google Calendar へ登録（ICS も配布）
+3. Gemini で「日付・タイトル・種別」を抽出 + AI信頼性フィルタリング  
+4. Google Calendar へ登録（重複チェック機能付き）
 
 ## 🔧 技術スタック
 | 区分 | 採用技術 |
@@ -14,8 +14,8 @@
 | フロント | FastAPI + HTMX |
 | バックエンド | Python 3.11 / Functions Framework |
 | サーバレス | Cloud Run (2nd gen) / Scheduler |
-| 生成 AI | Vertex AI Gemini Pro |
-| スクレイピング | snscrape / SerpAPI |
+| 生成 AI | Gemini API (汎用ジャンル対応 + AI信頼性判定) |
+| 検索・収集 | Google Programmable Search Engine API |
 | データ | Firestore |
 | CI/CD | GitHub Actions → gcloud run deploy |
 
