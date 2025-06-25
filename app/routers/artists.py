@@ -226,40 +226,61 @@ async def get_calendar_events(
     登録済みアーティストの全スケジュールを取得（カレンダー表示用）
     """
     try:
+        logger.info(f"Calendar events request for user: {user_id}")
+        
         # 登録済みアーティスト取得
         artists = artist_service.get_user_artists(user_id)
         
         if not artists:
             return {"events": [], "artists": [], "message": "登録されたアーティストがありません"}
         
-        # スケジュール収集サービス初期化
-        collector = ScheduleCollector()
+        # 簡易版: 既存のAPIを活用してデータ取得
         all_events = []
         artist_stats = []
         
         logger.info(f"Getting calendar events for {len(artists)} artists")
         
+        # 各アーティストごとに個別に収集APIを呼び出し
         for artist in artists:
             try:
                 artist_name = artist['name']
+                artist_id = artist['id']
                 
-                # アーティストのスケジュール収集
-                result = await collector.collect_artist_schedules(
-                    artist_name=artist_name,
-                    days_ahead=days_ahead
-                )
+                # 内部API呼び出しでスケジュール取得
+                import requests
                 
-                events = result.get('events', [])
+                # 内部でスケジュール収集APIを呼び出し
+                internal_payload = {
+                    "artist_name": artist_name,
+                    "days_ahead": days_ahead,
+                    "save_to_firestore": False,
+                    "auto_add_to_calendar": False
+                }
+                
+                # ローカルでScheduleCollectorを使用
+                try:
+                    collector = ScheduleCollector()
+                    result = await collector.collect_artist_schedules(
+                        artist_name=artist_name,
+                        days_ahead=days_ahead
+                    )
+                    events = result.get('events', [])
+                except ImportError as ie:
+                    logger.error(f"Import error for ScheduleCollector: {ie}")
+                    events = []
+                except Exception as ce:
+                    logger.error(f"Collection error for {artist_name}: {ce}")
+                    events = []
                 
                 # イベントにアーティスト情報を追加
                 for event in events:
-                    event['artist_id'] = artist['id']
+                    event['artist_id'] = artist_id
                     event['notification_enabled'] = artist.get('notification_enabled', True)
                 
                 all_events.extend(events)
                 
                 artist_stats.append({
-                    'id': artist['id'],
+                    'id': artist_id,
                     'name': artist_name,
                     'events_count': len(events),
                     'notification_enabled': artist.get('notification_enabled', True)
@@ -268,19 +289,22 @@ async def get_calendar_events(
                 logger.info(f"Collected {len(events)} events for {artist_name}")
                 
             except Exception as e:
-                logger.error(f"Failed to collect events for {artist['name']}: {e}")
+                logger.error(f"Failed to collect events for {artist.get('name', 'unknown')}: {e}")
                 artist_stats.append({
-                    'id': artist['id'],
-                    'name': artist['name'],
+                    'id': artist.get('id', ''),
+                    'name': artist.get('name', 'unknown'),
                     'events_count': 0,
                     'notification_enabled': artist.get('notification_enabled', True),
                     'error': str(e)
                 })
         
         # イベントを日付順にソート
-        all_events.sort(key=lambda x: x.get('date', ''))
+        try:
+            all_events.sort(key=lambda x: x.get('date', ''))
+        except Exception as sort_error:
+            logger.error(f"Failed to sort events: {sort_error}")
         
-        return {
+        response_data = {
             "events": all_events,
             "artists": artist_stats,
             "total_events": len(all_events),
@@ -288,6 +312,9 @@ async def get_calendar_events(
             "message": f"{len(artists)}件のアーティストから{len(all_events)}件のイベントを取得しました"
         }
         
+        logger.info(f"Calendar events response: {len(all_events)} events from {len(artists)} artists")
+        return response_data
+        
     except Exception as e:
         logger.error(f"Failed to get calendar events: {e}")
-        raise HTTPException(status_code=500, detail="カレンダーイベントの取得に失敗しました")
+        raise HTTPException(status_code=500, detail=f"カレンダーイベントの取得に失敗しました: {str(e)}")
