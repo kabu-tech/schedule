@@ -12,6 +12,7 @@ import logging
 
 from app.services.register import ArtistRegisterService
 from app.services.firestore_client import FirestoreClient
+from app.services.schedule_collector import ScheduleCollector
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +97,23 @@ async def artists_page(request: Request):
             "suggested_artists": artist_service.SUGGESTED_ARTISTS[:10]
         }
     )
+
+
+@router.get("/calendar", response_class=HTMLResponse)
+async def artists_calendar_page(request: Request):
+    """
+    アーティスト登録・カレンダー統合ページを表示
+    """
+    try:
+        return templates.TemplateResponse("artists_with_calendar.html", {
+            "request": request
+        })
+    except Exception as e:
+        logger.error(f"Failed to render calendar page: {e}")
+        return templates.TemplateResponse("artists_with_calendar.html", {
+            "request": request,
+            "error": "ページの読み込みに失敗しました"
+        })
 
 
 # APIエンドポイント
@@ -197,3 +215,79 @@ async def search_artists(q: str = ""):
     except Exception as e:
         logger.error(f"Failed to search artists: {e}")
         raise HTTPException(status_code=500, detail="検索に失敗しました")
+
+
+@router.get("/calendar-events")
+async def get_calendar_events(
+    user_id: str = Depends(get_current_user_id),
+    days_ahead: int = 60
+):
+    """
+    登録済みアーティストの全スケジュールを取得（カレンダー表示用）
+    """
+    try:
+        # 登録済みアーティスト取得
+        artists = artist_service.get_user_artists(user_id)
+        
+        if not artists:
+            return {"events": [], "artists": [], "message": "登録されたアーティストがありません"}
+        
+        # スケジュール収集サービス初期化
+        collector = ScheduleCollector()
+        all_events = []
+        artist_stats = []
+        
+        logger.info(f"Getting calendar events for {len(artists)} artists")
+        
+        for artist in artists:
+            try:
+                artist_name = artist['name']
+                
+                # アーティストのスケジュール収集
+                result = await collector.collect_artist_schedules(
+                    artist_name=artist_name,
+                    days_ahead=days_ahead
+                )
+                
+                events = result.get('events', [])
+                
+                # イベントにアーティスト情報を追加
+                for event in events:
+                    event['artist_id'] = artist['id']
+                    event['notification_enabled'] = artist.get('notification_enabled', True)
+                
+                all_events.extend(events)
+                
+                artist_stats.append({
+                    'id': artist['id'],
+                    'name': artist_name,
+                    'events_count': len(events),
+                    'notification_enabled': artist.get('notification_enabled', True)
+                })
+                
+                logger.info(f"Collected {len(events)} events for {artist_name}")
+                
+            except Exception as e:
+                logger.error(f"Failed to collect events for {artist['name']}: {e}")
+                artist_stats.append({
+                    'id': artist['id'],
+                    'name': artist['name'],
+                    'events_count': 0,
+                    'notification_enabled': artist.get('notification_enabled', True),
+                    'error': str(e)
+                })
+        
+        # イベントを日付順にソート
+        all_events.sort(key=lambda x: x.get('date', ''))
+        
+        return {
+            "events": all_events,
+            "artists": artist_stats,
+            "total_events": len(all_events),
+            "total_artists": len(artists),
+            "message": f"{len(artists)}件のアーティストから{len(all_events)}件のイベントを取得しました"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get calendar events: {e}")
+        raise HTTPException(status_code=500, detail="カレンダーイベントの取得に失敗しました")

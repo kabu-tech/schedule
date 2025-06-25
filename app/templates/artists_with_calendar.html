@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アーティスト登録・カレンダー - Universal Entertainment Schedule</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .layout {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            min-height: 80vh;
+        }
+        
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .btn {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #5a67d8;
+        }
+        
+        .btn-danger {
+            background-color: #e53e3e;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+        
+        .btn-secondary {
+            background-color: #718096;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4a5568;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        
+        .artist-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .artist-item:last-child {
+            border-bottom: none;
+        }
+        
+        .artist-info {
+            flex-grow: 1;
+        }
+        
+        .artist-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .artist-meta {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .artist-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .message-success {
+            background-color: #c6f6d5;
+            color: #276749;
+        }
+        
+        .message-error {
+            background-color: #fed7d7;
+            color: #9b2c2c;
+        }
+        
+        .message-info {
+            background-color: #bee3f8;
+            color: #2a69ac;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        /* カレンダースタイル */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .calendar-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .calendar-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .view-toggle {
+            display: flex;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .view-toggle button {
+            background: white;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .view-toggle button.active {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .view-toggle button:hover:not(.active) {
+            background-color: #f7fafc;
+        }
+        
+        .calendar-view {
+            min-height: 500px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        
+        .events-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .event-item {
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: box-shadow 0.2s;
+        }
+        
+        .event-item:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .event-title {
+            font-weight: bold;
+            color: #2d3748;
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        
+        .event-date {
+            background-color: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .event-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 8px;
+        }
+        
+        .event-detail {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .event-detail-icon {
+            margin-right: 5px;
+        }
+        
+        .reliability-badge {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .reliability-high {
+            background-color: #c6f6d5;
+            color: #276749;
+        }
+        
+        .reliability-medium {
+            background-color: #faf089;
+            color: #744210;
+        }
+        
+        .reliability-low {
+            background-color: #fed7d7;
+            color: #9b2c2c;
+        }
+        
+        .artist-tag {
+            background-color: #e2e8f0;
+            color: #2d3748;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .quick-add {
+            margin-top: 20px;
+        }
+        
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .tag {
+            background-color: #e2e8f0;
+            color: #2d3748;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+        
+        .tag:hover {
+            background-color: #cbd5e0;
+        }
+        
+        .suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 アーティスト登録・スケジュールカレンダー</h1>
+        
+        <div id="message"></div>
+        
+        <div class="layout">
+            <!-- サイドバー: アーティスト登録 -->
+            <div class="sidebar">
+                <h2>🎯 アーティスト登録</h2>
+                
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="artistName">アーティスト名</label>
+                        <div style="position: relative;">
+                            <input 
+                                type="text" 
+                                id="artistName" 
+                                name="artistName" 
+                                placeholder="例: BTS, あいみょん, 宝塚歌劇団..."
+                                autocomplete="off"
+                                required
+                            >
+                            <div id="suggestions" class="suggestions"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-wrapper">
+                        <input 
+                            type="checkbox" 
+                            id="notification" 
+                            name="notification" 
+                            checked
+                        >
+                        <label for="notification">通知を受け取る</label>
+                    </div>
+                    
+                    <button type="submit" class="btn">登録</button>
+                </form>
+                
+                <div class="quick-add">
+                    <h3>人気アーティスト</h3>
+                    <div class="tag-list">
+                        <span class="tag" onclick="quickAdd('BLACKPINK')">BLACKPINK</span>
+                        <span class="tag" onclick="quickAdd('BTS')">BTS</span>
+                        <span class="tag" onclick="quickAdd('あいみょん')">あいみょん</span>
+                        <span class="tag" onclick="quickAdd('米津玄師')">米津玄師</span>
+                        <span class="tag" onclick="quickAdd('King Gnu')">King Gnu</span>
+                        <span class="tag" onclick="quickAdd('宝塚歌劇団')">宝塚歌劇団</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3>📊 登録済みアーティスト</h3>
+                    <div id="artistList">
+                        <!-- 動的に読み込み -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- メインコンテンツ: カレンダー -->
+            <div class="main-content">
+                <div class="calendar-header">
+                    <div class="calendar-title">📅 スケジュールカレンダー</div>
+                    <div class="calendar-controls">
+                        <div class="view-toggle">
+                            <button onclick="switchView('list')" class="active" id="listViewBtn">リスト表示</button>
+                            <button onclick="switchView('calendar')" id="calendarViewBtn">カレンダー表示</button>
+                        </div>
+                        <button class="btn btn-secondary" onclick="refreshCalendar()">🔄 更新</button>
+                    </div>
+                </div>
+                
+                <div id="calendarStats" class="stats-grid">
+                    <!-- 統計情報を動的に表示 -->
+                </div>
+                
+                <div id="calendarView" class="calendar-view">
+                    <div class="loading">
+                        📅 カレンダーを読み込み中...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // グローバル変数
+        let currentEvents = [];
+        let currentArtists = [];
+        let currentView = 'list';
+        
+        // DOM要素
+        const artistInput = document.getElementById('artistName');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const form = document.getElementById('registerForm');
+        const messageDiv = document.getElementById('message');
+        const artistListDiv = document.getElementById('artistList');
+        const calendarView = document.getElementById('calendarView');
+        const calendarStats = document.getElementById('calendarStats');
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadArtists();
+            loadCalendarEvents();
+        });
+        
+        // アーティスト一覧読み込み
+        async function loadArtists() {
+            try {
+                const response = await fetch('/artists/');
+                const artists = await response.json();
+                
+                if (artists.length === 0) {
+                    artistListDiv.innerHTML = '<div class="empty-state">アーティストが登録されていません</div>';
+                    return;
+                }
+                
+                artistListDiv.innerHTML = artists.map(artist => `
+                    <div class="artist-item" data-id="${artist.id}">
+                        <div class="artist-info">
+                            <div class="artist-name">${artist.name}</div>
+                            <div class="artist-meta">
+                                通知: ${artist.notification_enabled ? "ON" : "OFF"}
+                            </div>
+                        </div>
+                        <div class="artist-actions">
+                            <button 
+                                class="btn btn-small"
+                                onclick="toggleNotification('${artist.id}', ${!artist.notification_enabled})"
+                            >
+                                通知${artist.notification_enabled ? "OFF" : "ON"}
+                            </button>
+                            <button 
+                                class="btn btn-danger btn-small"
+                                onclick="unregisterArtist('${artist.id}', '${artist.name}')"
+                            >
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('アーティスト読み込みエラー:', error);
+                artistListDiv.innerHTML = '<div class="empty-state">読み込みエラー</div>';
+            }
+        }
+        
+        // カレンダーイベント読み込み
+        async function loadCalendarEvents() {
+            try {
+                calendarView.innerHTML = '<div class="loading">📅 スケジュールを読み込み中...</div>';
+                
+                const response = await fetch('/artists/calendar-events');
+                const data = await response.json();
+                
+                currentEvents = data.events || [];
+                currentArtists = data.artists || [];
+                
+                updateStats(data);
+                renderCalendar();
+                
+            } catch (error) {
+                console.error('カレンダー読み込みエラー:', error);
+                calendarView.innerHTML = '<div class="empty-state">❌ スケジュールの読み込みに失敗しました</div>';
+            }
+        }
+        
+        // 統計情報更新
+        function updateStats(data) {
+            const totalEvents = data.total_events || 0;
+            const totalArtists = data.total_artists || 0;
+            const highReliabilityEvents = currentEvents.filter(e => e.reliability === 'high').length;
+            const upcomingEvents = currentEvents.filter(e => new Date(e.date) > new Date()).length;
+            
+            calendarStats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${totalArtists}</div>
+                    <div class="stat-label">登録アーティスト</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${totalEvents}</div>
+                    <div class="stat-label">総イベント数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${upcomingEvents}</div>
+                    <div class="stat-label">今後のイベント</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${highReliabilityEvents}</div>
+                    <div class="stat-label">高信頼度イベント</div>
+                </div>
+            `;
+        }
+        
+        // カレンダー描画
+        function renderCalendar() {
+            if (currentView === 'list') {
+                renderListView();
+            } else {
+                renderCalendarView();
+            }
+        }
+        
+        // リスト表示
+        function renderListView() {
+            if (currentEvents.length === 0) {
+                calendarView.innerHTML = '<div class="empty-state">📅 イベントがありません<br>アーティストを登録してください</div>';
+                return;
+            }
+            
+            const eventsHtml = currentEvents.map(event => {
+                const date = new Date(event.date);
+                const isUpcoming = date > new Date();
+                const artist = currentArtists.find(a => a.id === event.artist_id);
+                
+                return `
+                    <div class="event-item">
+                        <div class="event-header">
+                            <div class="event-title">${event.title}</div>
+                            <div class="event-date" style="${!isUpcoming ? 'background-color: #718096;' : ''}">
+                                ${event.date} ${event.time || ''}
+                            </div>
+                        </div>
+                        <div class="event-details">
+                            <div class="event-detail">
+                                <span class="event-detail-icon">🎭</span>
+                                <span class="artist-tag">${event.artist}</span>
+                            </div>
+                            <div class="event-detail">
+                                <span class="event-detail-icon">📍</span>
+                                ${event.location || '場所未定'}
+                            </div>
+                            <div class="event-detail">
+                                <span class="event-detail-icon">🎫</span>
+                                ${event.type || 'イベント'}
+                            </div>
+                            <div class="event-detail">
+                                <span class="reliability-badge reliability-${event.reliability || 'medium'}">
+                                    ${event.reliability === 'high' ? '高信頼度' : event.reliability === 'low' ? '低信頼度' : '中信頼度'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            calendarView.innerHTML = `
+                <div class="events-list">
+                    ${eventsHtml}
+                </div>
+            `;
+        }
+        
+        // カレンダー表示（簡易実装）
+        function renderCalendarView() {
+            calendarView.innerHTML = `
+                <div class="empty-state">
+                    📅 カレンダー表示機能は開発中です<br>
+                    現在はリスト表示をご利用ください
+                </div>
+            `;
+        }
+        
+        // 表示切替
+        function switchView(view) {
+            currentView = view;
+            
+            document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+            document.getElementById('calendarViewBtn').classList.toggle('active', view === 'calendar');
+            
+            renderCalendar();
+        }
+        
+        // カレンダー更新
+        function refreshCalendar() {
+            loadCalendarEvents();
+            showMessage('info', 'カレンダーを更新しています...');
+        }
+        
+        // 自動補完機能
+        let searchTimeout;
+        artistInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 1) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/artists/search?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.suggestions.length > 0) {
+                            suggestionsDiv.innerHTML = data.suggestions
+                                .map(s => `<div class="suggestion-item" onclick="selectSuggestion('${s}')">${s}</div>`)
+                                .join('');
+                            suggestionsDiv.style.display = 'block';
+                        } else {
+                            suggestionsDiv.style.display = 'none';
+                        }
+                    });
+            }, 300);
+        });
+        
+        // 提案を選択
+        function selectSuggestion(artist) {
+            artistInput.value = artist;
+            suggestionsDiv.style.display = 'none';
+        }
+        
+        // クイック追加
+        function quickAdd(artist) {
+            artistInput.value = artist;
+            form.dispatchEvent(new Event('submit'));
+        }
+        
+        // フォーム送信
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const artistName = artistInput.value.trim();
+            const notification = document.getElementById('notification').checked;
+            
+            try {
+                const response = await fetch('/artists/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        artist_name: artistName,
+                        notification_enabled: notification
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('success', `${data.name}を登録しました`);
+                    artistInput.value = '';
+                    loadArtists();
+                    loadCalendarEvents();
+                } else {
+                    showMessage('error', data.detail || '登録に失敗しました');
+                }
+            } catch (error) {
+                showMessage('error', 'エラーが発生しました');
+            }
+        });
+        
+        // アーティスト削除
+        async function unregisterArtist(artistId, artistName) {
+            if (!confirm(`${artistName}の登録を解除しますか？`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/artists/${artistId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showMessage('success', '登録を解除しました');
+                    loadArtists();
+                    loadCalendarEvents();
+                } else {
+                    const data = await response.json();
+                    showMessage('error', data.detail || '削除に失敗しました');
+                }
+            } catch (error) {
+                showMessage('error', 'エラーが発生しました');
+            }
+        }
+        
+        // 通知設定切替
+        async function toggleNotification(artistId, enabled) {
+            try {
+                const response = await fetch(`/artists/${artistId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        notification_enabled: enabled
+                    })
+                });
+                
+                if (response.ok) {
+                    showMessage('success', `通知を${enabled ? '有効' : '無効'}にしました`);
+                    loadArtists();
+                } else {
+                    const data = await response.json();
+                    showMessage('error', data.detail || '更新に失敗しました');
+                }
+            } catch (error) {
+                showMessage('error', 'エラーが発生しました');
+            }
+        }
+        
+        // メッセージ表示
+        function showMessage(type, text) {
+            messageDiv.className = `message message-${type}`;
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // クリックで提案を閉じる
+        document.addEventListener('click', function(e) {
+            if (!artistInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
