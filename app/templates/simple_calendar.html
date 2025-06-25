@@ -482,8 +482,9 @@
         // アーティスト一覧読み込み
         async function loadArtists() {
             try {
-                const response = await fetch('/artists/');
-                const artists = await response.json();
+                const response = await fetch('/artists/list');
+                const data = await response.json();
+                const artists = data.artists || [];
                 
                 currentArtists = artists;
                 
